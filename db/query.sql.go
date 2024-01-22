@@ -69,14 +69,14 @@ func (q *Queries) ListEquipment(ctx context.Context) ([]Equipment, error) {
 const listEquipmentAndParent = `-- name: ListEquipmentAndParent :many
 SELECT e.id, e.name AS equipment_name, p.name as parent_name
 FROM equipment e 
-JOIN equipment p ON e.parent = p.id
+LEFT JOIN equipment p ON e.parent = p.id
 ORDER BY e.name ASC
 `
 
 type ListEquipmentAndParentRow struct {
 	ID            int64
 	EquipmentName string
-	ParentName    string
+	ParentName    sql.NullString
 }
 
 func (q *Queries) ListEquipmentAndParent(ctx context.Context) ([]ListEquipmentAndParentRow, error) {

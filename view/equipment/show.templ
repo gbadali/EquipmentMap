@@ -20,7 +20,7 @@ templ EquipmentList(equip []db.ListEquipmentAndParentRow) {
 						<tr>
 							<td>{ fmt.Sprint(e.ID) }</td>
 							<td>{ e.EquipmentName }</td>
-							<td>{ string(e.ParentName) }</td>
+							<td>{ string(e.ParentName.String) }</td>
 						</tr>
 					}
 				</tbody>
