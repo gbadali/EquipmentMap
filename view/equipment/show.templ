@@ -1,0 +1,30 @@
+package equipment
+
+import "github.com/gbadali/equipmentMap/view/layout"
+import "github.com/gbadali/equipmentMap/db"
+import "fmt"
+
+templ EquipmentList(equip []db.ListEquipmentAndParentRow) {
+	@layout.Base("Equipment") {
+		<div class="container">
+			<table id="equipmentTable">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Name</th>
+						<th>Parent</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, e := range equip {
+						<tr>
+							<td>{ fmt.Sprint(e.ID) }</td>
+							<td>{ e.EquipmentName }</td>
+							<td>{ string(e.ParentName) }</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+}
