@@ -18,7 +18,7 @@ templ EquipmentList(equip []db.ListEquipmentAndParentRow) {
 				<tbody>
 					for _, e := range equip {
 						<tr>
-							<td>{ fmt.Sprint(e.ID) }</td>
+							<td><a href={ templ.URL("equipment/" + fmt.Sprint(e.ID)) }>{ fmt.Sprint(e.ID) }</a></td>
 							<td>{ e.EquipmentName }</td>
 							<td>{ string(e.ParentName.String) }</td>
 						</tr>

@@ -4,3 +4,5 @@ CREATE TABLE equipment (
     parent INTEGER,
     FOREIGN KEY (parent) REFERENCES equipment(id)
 );
+
+-- TODO: add a user table

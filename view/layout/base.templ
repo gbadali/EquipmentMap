@@ -9,9 +9,16 @@ templ Base(name string) {
 			<title>{ name } </title>
 		</head>
 		<body>
-			<header>
-				<h1>Layout Page</h1>
-			</header>
+			<nav>
+				<ul>
+					<li><strong>Equipment Map</strong></li>
+				</ul>
+				<ul>
+					<li><a href="/">Home</a></li>
+					<li><a href="/equipment/add">Add</a></li>
+					<li></li>
+				</ul>
+			</nav>
 			{ children... }
 		</body>
 	</html>

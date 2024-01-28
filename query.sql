@@ -6,14 +6,17 @@ WHERE id = ? LIMIT 1;
 SELECT e.id, e.name AS equipment_name, p.name as parent_name
 FROM equipment e 
 LEFT JOIN equipment p ON e.parent = p.id
-ORDER BY e.name ASC;
+ORDER BY e.id ASC;
 
 -- name: ListEquipment :many
 SELECT * FROM equipment
-ORDER BY name ASC;
+ORDER BY id ASC;
 
 -- name: CreateEquipment :exec
 INSERT INTO equipment (name, parent)
 VALUES (?, ?)
 RETURNING id;
 
+-- name: ListChildren :many
+SELECT * FROM equipment
+WHERE parent = ?;

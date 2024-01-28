@@ -38,9 +38,37 @@ func (q *Queries) GetEquipment(ctx context.Context, id int64) (Equipment, error)
 	return i, err
 }
 
+const listChildren = `-- name: ListChildren :many
+SELECT id, name, parent FROM equipment
+WHERE parent = ?
+`
+
+func (q *Queries) ListChildren(ctx context.Context, parent sql.NullInt64) ([]Equipment, error) {
+	rows, err := q.db.QueryContext(ctx, listChildren, parent)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Equipment
+	for rows.Next() {
+		var i Equipment
+		if err := rows.Scan(&i.ID, &i.Name, &i.Parent); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listEquipment = `-- name: ListEquipment :many
 SELECT id, name, parent FROM equipment
-ORDER BY name ASC
+ORDER BY id ASC
 `
 
 func (q *Queries) ListEquipment(ctx context.Context) ([]Equipment, error) {
@@ -70,7 +98,7 @@ const listEquipmentAndParent = `-- name: ListEquipmentAndParent :many
 SELECT e.id, e.name AS equipment_name, p.name as parent_name
 FROM equipment e 
 LEFT JOIN equipment p ON e.parent = p.id
-ORDER BY e.name ASC
+ORDER BY e.id ASC
 `
 
 type ListEquipmentAndParentRow struct {
