@@ -38,6 +38,50 @@ func (q *Queries) GetEquipment(ctx context.Context, id int64) (Equipment, error)
 	return i, err
 }
 
+const getHierarchy = `-- name: GetHierarchy :many
+WITH RECURSIVE parents AS (
+  SELECT id, name, parent
+  FROM equipment AS e
+  WHERE e.id = ?  -- Replace ? with the given id
+  UNION ALL
+  SELECT p.id, p.name, p.parent
+  FROM equipment p
+  INNER JOIN parents c ON p.id = c.parent
+)
+SELECT id, name, COALESCE(parent, 0) FROM parents
+WHERE parent IS NULL OR parent IS NOT NULL
+ORDER BY parent
+`
+
+type GetHierarchyRow struct {
+	ID     int64
+	Name   string
+	Parent int64
+}
+
+func (q *Queries) GetHierarchy(ctx context.Context, id int64) ([]GetHierarchyRow, error) {
+	rows, err := q.db.QueryContext(ctx, getHierarchy, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetHierarchyRow
+	for rows.Next() {
+		var i GetHierarchyRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Parent); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listChildren = `-- name: ListChildren :many
 SELECT id, name, parent FROM equipment
 WHERE parent = ?

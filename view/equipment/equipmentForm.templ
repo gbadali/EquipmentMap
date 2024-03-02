@@ -41,34 +41,21 @@ templ EquipmentSelectOptions(equip []db.Equipment) {
 	}
 }
 
-templ Equipment(equip db.Equipment, children []db.Equipment, parent db.Equipment) {
+templ Equipment(equip db.Equipment) {
 	@layout.Base("Equipment") {
 		<div class="container">
-			if equip.Parent.Valid {
-				<article>
-					<header>Parent Equipment</header>
-					<a href={ templ.URL(fmt.Sprint(parent.ID)) }>{ parent.Name }</a>
-				</article>
-			}
+			@Breadcrumbs()
 			<article hx-target="this" hx-sqap="outerHTML">
 				<header>Equipment</header>
 				<div><label>Name:</label> <input type="text" placeholder={ equip.Name } readonly/></div>
 				if equip.Parent.Valid {
 					<div>
 						<label>Parent:</label>
-						<input type="text" placeholder={ parent.Name } readonly/>
+						<input type="text" placeholder={ fmt.Sprintf("%v", equip.Parent.Int64) } readonly/>
 					</div>
 				}
 				<button hx-get={ fmt.Sprint(equip.ID) + "/edit" } class="btn btn-primary">Click To Edit</button>
 			</article>
-			<div class="grid">
-				for i, c := range children {
-					<article>
-						<header>Child { fmt.Sprint(i) }</header>
-						<a href={ templ.URL(fmt.Sprint(c.ID)) }>{ c.Name }</a>
-					</article>
-				}
-			</div>
 		</div>
 	}
 }
@@ -100,4 +87,13 @@ templ EditEquipment(equip db.Equipment, list []db.Equipment) {
 			<button class="btn" hx-get={ fmt.Sprint(equip.ID) }>Cancel</button>
 		</div>
 	</form>
+}
+
+templ Breadcrumbs() {
+	<nav aria-label="breadcrumb">
+		<ul>
+			<li><a href="/">Ship</a></li>
+			<li><a href="#">Place Holder</a></li>
+		</ul>
+	</nav>
 }

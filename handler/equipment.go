@@ -84,6 +84,14 @@ func (e EquipmentHandler) HandleSaveEquipment(c echo.Context) error {
 }
 
 // HandleShowIndividualEquipment handles the request to show an individual equipment
+// HandleShowIndividualEquipment handles the request to show individual equipment.
+// It retrieves the equipment with the specified ID from the database and its parent and children.
+// If the equipment has a parent, it also retrieves the parent equipment.
+// Finally, it renders the equipment information using the render function.
+// Parameters:
+// - c: the echo.Context object representing the HTTP request and response.
+// Returns:
+// - error: an error if any occurred during the handling of the request, otherwise nil.
 func (e EquipmentHandler) HandleShowIndividualEquipment(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -91,29 +99,20 @@ func (e EquipmentHandler) HandleShowIndividualEquipment(c echo.Context) error {
 	}
 	fmt.Printf("Handling show individual equipment request for %v\n", id)
 
+	breadcrumbs, err := e.Q.GetHierarchy(c.Request().Context(), id)
+	if err != nil {
+		return err
+	}
+	fmt.Println(breadcrumbs)
+
 	// Create the equipment, parend and children variables
-	var parent db.Equipment
 	var equip db.Equipment
-	var children []db.Equipment
 
 	equip, err = e.Q.GetEquipment(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
-
-	if equip.Parent.Valid {
-		parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent.Int64)
-		if err != nil {
-			return err
-		}
-		fmt.Println(parent)
-	}
-
-	children, err = e.Q.ListChildren(c.Request().Context(), sql.NullInt64{Valid: true, Int64: id})
-	if err != nil {
-		return err
-	}
-	return render(c, equipment.Equipment(equip, children, parent))
+	return render(c, equipment.Equipment(equip))
 }
 
 // HandleEditEquipment handles the request to show the form to edit an equipment

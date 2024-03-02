@@ -20,3 +20,17 @@ RETURNING id;
 -- name: ListChildren :many
 SELECT * FROM equipment
 WHERE parent = ?;
+
+-- name: GetHierarchy :many
+WITH RECURSIVE parents AS (
+  SELECT id, name, parent
+  FROM equipment AS e
+  WHERE e.id = ?  -- Replace ? with the given id
+  UNION ALL
+  SELECT p.id, p.name, p.parent
+  FROM equipment p
+  INNER JOIN parents c ON p.id = c.parent
+)
+SELECT id, name, COALESCE(parent, 0) FROM parents
+WHERE parent IS NULL OR parent IS NOT NULL
+ORDER BY parent;
