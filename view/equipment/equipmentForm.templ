@@ -24,7 +24,7 @@ templ EquipmentForm(list []db.Equipment) {
 						id="parent"
 						name="parent"
 					>
-						@EquipmentSelectOptions(list)
+						@EquipmentSelectOptions(list, "")
 					</select>
 				</div>
 				<div>
@@ -35,65 +35,76 @@ templ EquipmentForm(list []db.Equipment) {
 	}
 }
 
-templ EquipmentSelectOptions(equip []db.Equipment) {
+templ EquipmentSelectOptions(equip []db.Equipment, selected string) {
 	for _, e := range equip {
-		<option value={ fmt.Sprint(e.ID) }>{ e.Name }</option>
+		if e.Name == selected {
+			<option value={ fmt.Sprint(e.ID) } selected="selected">{ e.Name }</option>
+		} else {
+			<option value={ fmt.Sprint(e.ID) }>{ e.Name }</option>
+		}
 	}
 }
 
-templ Equipment(equip db.Equipment) {
+// EquipmentLayout renders a single piece of equipment
+templ EquipmentLayout(equip db.Equipment, parent db.Equipment, bread []db.GetHierarchyRow ) {
 	@layout.Base("Equipment") {
 		<div class="container">
-			@Breadcrumbs()
-			<article hx-target="this" hx-sqap="outerHTML">
-				<header>Equipment</header>
-				<div><label>Name:</label> <input type="text" placeholder={ equip.Name } readonly/></div>
-				if equip.Parent.Valid {
-					<div>
-						<label>Parent:</label>
-						<input type="text" placeholder={ fmt.Sprintf("%v", equip.Parent.Int64) } readonly/>
-					</div>
-				}
-				<button hx-get={ fmt.Sprint(equip.ID) + "/edit" } class="btn btn-primary">Click To Edit</button>
-			</article>
+			@Breadcrumbs(bread)
+			@Equipment(equip, parent)
 		</div>
 	}
 }
 
-templ EditEquipment(equip db.Equipment, list []db.Equipment) {
-	<form hx-put={ "equipment/" + fmt.Sprint(equip.ID) } hx-target="this" hx-swap="outerHTML">
-		<div class="form-group">
-			<label for="name">Name</label>
-			<input
-				class="form-control"
-				form="add_equipment"
-				id="name"
-				name="name"
-				placeholder="Name"
-				required="required"
-				type="text"
-				value={ equip.Name }
-			/>
-			<label for="parent">Parent</label>
-			<select
-				id="parent"
-				name="parent"
-			>
-				@EquipmentSelectOptions(list)
-			</select>
-		</div>
-		<div>
-			<button class="btn" type="submit">Add Equipment</button>
-			<button class="btn" hx-get={ fmt.Sprint(equip.ID) }>Cancel</button>
-		</div>
-	</form>
+// Equipment renders a single piece of equipment
+templ Equipment(equip db.Equipment, parent db.Equipment) {
+	<article hx-target="this" hx-swap="outerHTML">
+		<header>Equipment</header>
+		<div><label>Name:</label> <input type="text" placeholder={ equip.Name } readonly/></div>
+		if equip.Parent.Valid {
+			<div>
+				<label>Parent:</label>
+				<input type="text" placeholder={ parent.Name } readonly/>
+			</div>
+		}
+		<button hx-get={ fmt.Sprint(equip.ID) + "/edit" } class="btn btn-primary">Click To Edit</button>
+	</article>
 }
 
-templ Breadcrumbs() {
+// EditEquipment renders a form to edit equipment
+templ EditEquipment(equip db.Equipment, parent db.Equipment, list []db.Equipment) {
+	<article hx-target="this" hx-swap="outerHTML">
+		<header>Edit Equipment</header>
+		<form hx-put={ fmt.Sprint(equip.ID) }>
+			<div class="form-group">
+				<label for="name">Name</label>
+				<input
+					id="name"
+					name="name"
+					value={ equip.Name }
+				/>
+				<label for="parent">Parent</label>
+				<select
+					id="parent"
+					name="parent"
+				>
+					@EquipmentSelectOptions(list, parent.Name)
+				</select>
+			</div>
+			<div>
+				<button class="btn" type="submit">Edit Equipment</button>
+				<button class="btn" hx-get={ fmt.Sprint(equip.ID) }>Cancel</button>
+			</div>
+		</form>
+	</article>
+}
+
+// Breadcrumbs renders a breadcrumb trail
+templ Breadcrumbs(bread []db.GetHierarchyRow) {
 	<nav aria-label="breadcrumb">
 		<ul>
-			<li><a href="/">Ship</a></li>
-			<li><a href="#">Place Holder</a></li>
+			for _,b := range bread {
+				<li><a href={ templ.SafeURL(fmt.Sprint(b.ID)) }>{ b.Name }</a></li>
+			}
 		</ul>
 	</nav>
 }

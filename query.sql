@@ -1,5 +1,5 @@
 -- name: GetEquipment :one
-SELECT * FROM equipment
+SELECT id, name, COALESCE(parent, '') as parent FROM equipment
 WHERE id = ? LIMIT 1;
 
 -- name: ListEquipmentAndParent :many
@@ -20,6 +20,11 @@ RETURNING id;
 -- name: ListChildren :many
 SELECT * FROM equipment
 WHERE parent = ?;
+
+-- name: UpdateEquipment :exec
+UPDATE equipment
+SET name = ?, parent = ?
+WHERE id = ?;
 
 -- name: GetHierarchy :many
 WITH RECURSIVE parents AS (

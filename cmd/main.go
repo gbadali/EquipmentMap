@@ -21,7 +21,7 @@ func main() {
 	e.POST("/equipment", equipHand.HandleSaveEquipment)
 	e.GET("/equipment/:id", equipHand.HandleShowIndividualEquipment)
 	e.GET("/equipment/:id/edit", equipHand.HandleEditEquipment)
-	// e.GET("/util/breadcrumbs/:id", equipHand.HandleBreadcrumbs)
+	e.PUT("/equipment/:id", equipHand.HandleUpdateEquipment)
 
 	e.Logger.Fatal(e.Start(":3000"))
 	// fmt.Println("Listening on :3000")

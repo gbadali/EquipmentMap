@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/gbadali/equipmentMap/db"
@@ -41,7 +42,7 @@ func (e EquipmentHandler) HandleListEquipment(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, equipment.EquipmentSelectOptions(equipmentList))
+	return render(c, equipment.EquipmentSelectOptions(equipmentList, ""))
 }
 
 // HandleAddEquipment handles the request to show the form to add a new equipment
@@ -84,15 +85,8 @@ func (e EquipmentHandler) HandleSaveEquipment(c echo.Context) error {
 }
 
 // HandleShowIndividualEquipment handles the request to show an individual equipment
-// HandleShowIndividualEquipment handles the request to show individual equipment.
-// It retrieves the equipment with the specified ID from the database and its parent and children.
-// If the equipment has a parent, it also retrieves the parent equipment.
-// Finally, it renders the equipment information using the render function.
-// Parameters:
-// - c: the echo.Context object representing the HTTP request and response.
-// Returns:
-// - error: an error if any occurred during the handling of the request, otherwise nil.
 func (e EquipmentHandler) HandleShowIndividualEquipment(c echo.Context) error {
+	isHTMX := c.Request().Header.Get("HX-Request") == "true"
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		return err
@@ -103,16 +97,23 @@ func (e EquipmentHandler) HandleShowIndividualEquipment(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(breadcrumbs)
 
-	// Create the equipment, parend and children variables
+	// Create the equipment, parent and children variables
 	var equip db.Equipment
+	var parent db.Equipment
 
 	equip, err = e.Q.GetEquipment(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
-	return render(c, equipment.Equipment(equip))
+	parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent.Int64)
+	if err != nil {
+		return err
+	}
+	if isHTMX {
+		return render(c, equipment.Equipment(equip, parent))
+	}
+	return render(c, equipment.EquipmentLayout(equip, parent, breadcrumbs))
 }
 
 // HandleEditEquipment handles the request to show the form to edit an equipment
@@ -123,11 +124,17 @@ func (e EquipmentHandler) HandleEditEquipment(c echo.Context) error {
 	}
 	fmt.Printf("Handling edit equipment request for %v\n", id)
 
-	// Create the equipment, parend and children variables
+	// Create the equipment, parent and children variables
 	var equip db.Equipment
 	var list []db.Equipment
+	var parent db.Equipment
 
 	equip, err = e.Q.GetEquipment(c.Request().Context(), id)
+	if err != nil {
+		return err
+	}
+
+	parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent.Int64)
 	if err != nil {
 		return err
 	}
@@ -136,7 +143,53 @@ func (e EquipmentHandler) HandleEditEquipment(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	for i, item := range list {
+		if item.ID == equip.ID {
+			// Remove the matching item from the list
+			list = append(list[:i], list[i+1:]...)
+			break
+		}
+	}
 
-	return render(c, equipment.EditEquipment(equip, list))
+	return render(c, equipment.EditEquipment(equip, parent, list))
 
+}
+
+func (e EquipmentHandler) HandleUpdateEquipment(c echo.Context) error {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		return err
+	}
+	fromData, err := c.FormParams()
+	if err != nil {
+		return err
+	}
+	name := fromData.Get("name")
+	parentStr := fromData.Get("parent")
+	parent, err := strconv.ParseInt(parentStr, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	if name == "" {
+		return c.Redirect(
+			http.StatusUnprocessableEntity,
+			fmt.Sprintf("/equipment/%v/edit", id),
+		)
+	}
+	// Check if the parent is the same as the equipment
+	if id == parent {
+		parent = 0
+		return fmt.Errorf("equipment can't be its own parent")
+	}
+
+	err = e.Q.UpdateEquipment(c.Request().Context(), db.UpdateEquipmentParams{
+		ID:     id,
+		Name:   name,
+		Parent: sql.NullInt64{Int64: parent, Valid: true},
+	})
+	if err != nil {
+		return err
+	}
+	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/equipment/%v", id))
 }

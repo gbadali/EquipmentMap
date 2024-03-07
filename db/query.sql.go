@@ -27,13 +27,19 @@ func (q *Queries) CreateEquipment(ctx context.Context, arg CreateEquipmentParams
 }
 
 const getEquipment = `-- name: GetEquipment :one
-SELECT id, name, parent FROM equipment
+SELECT id, name, COALESCE(parent, '') as parent FROM equipment
 WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) GetEquipment(ctx context.Context, id int64) (Equipment, error) {
+type GetEquipmentRow struct {
+	ID     int64
+	Name   string
+	Parent int64
+}
+
+func (q *Queries) GetEquipment(ctx context.Context, id int64) (GetEquipmentRow, error) {
 	row := q.db.QueryRowContext(ctx, getEquipment, id)
-	var i Equipment
+	var i GetEquipmentRow
 	err := row.Scan(&i.ID, &i.Name, &i.Parent)
 	return i, err
 }
@@ -172,4 +178,21 @@ func (q *Queries) ListEquipmentAndParent(ctx context.Context) ([]ListEquipmentAn
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateEquipment = `-- name: UpdateEquipment :exec
+UPDATE equipment
+SET name = ?, parent = ?
+WHERE id = ?
+`
+
+type UpdateEquipmentParams struct {
+	Name   string
+	Parent sql.NullInt64
+	ID     int64
+}
+
+func (q *Queries) UpdateEquipment(ctx context.Context, arg UpdateEquipmentParams) error {
+	_, err := q.db.ExecContext(ctx, updateEquipment, arg.Name, arg.Parent, arg.ID)
+	return err
 }
