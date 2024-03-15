@@ -16,7 +16,7 @@ func main() {
 	equipHand := handler.NewEquipmentHandler(db.DB, q)
 
 	e.GET("/", equipHand.HandleShowEquipment)
-	e.GET("/equipmentList", equipHand.HandleListEquipment)
+	e.GET("/equipmentList", equipHand.HandleSelectOptions)
 	e.GET("/equipment/add", equipHand.HandleAddEquipment)
 	e.POST("/equipment", equipHand.HandleSaveEquipment)
 	e.GET("/equipment/:id", equipHand.HandleShowIndividualEquipment)

@@ -3,7 +3,7 @@ module github.com/gbadali/equipmentMap
 go 1.21.5
 
 require (
-	github.com/a-h/templ v0.2.513
+	github.com/a-h/templ v0.2.598
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/mattn/go-sqlite3 v1.14.19
 )

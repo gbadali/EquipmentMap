@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -34,8 +35,8 @@ func (e EquipmentHandler) HandleShowEquipment(c echo.Context) error {
 	return render(c, equipment.EquipmentList(equipmentList))
 }
 
-// HandleListEquipment handles the request to show all equipment in a select and generates the options
-func (e EquipmentHandler) HandleListEquipment(c echo.Context) error {
+// HandleSelectOptions handles the request to show all equipment in a select and generates the options
+func (e EquipmentHandler) HandleSelectOptions(c echo.Context) error {
 	fmt.Println("Handling list equipment request")
 	equipmentList, err := e.Q.ListEquipment(c.Request().Context())
 	fmt.Println(equipmentList)
@@ -89,25 +90,36 @@ func (e EquipmentHandler) HandleShowIndividualEquipment(c echo.Context) error {
 	isHTMX := c.Request().Header.Get("HX-Request") == "true"
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
+		err = fmt.Errorf("error parsing id: %v", err)
+		slog.Error(err.Error())
 		return err
 	}
 	fmt.Printf("Handling show individual equipment request for %v\n", id)
 
-	breadcrumbs, err := e.Q.GetHierarchy(c.Request().Context(), id)
+	fmt.Printf("looking for breadcrumbs for %v\n", id)
+	breadcrumbs, err := e.breadcrumbs(c, id)
 	if err != nil {
+		err = fmt.Errorf("error getting breadcrumbs: %v", err)
+		slog.Error(err.Error())
 		return err
 	}
+	fmt.Print("breadcrumbs: ", breadcrumbs)
 
 	// Create the equipment, parent and children variables
-	var equip db.Equipment
-	var parent db.Equipment
+	var equip db.GetEquipmentRow
+	var parent db.GetEquipmentRow
 
 	equip, err = e.Q.GetEquipment(c.Request().Context(), id)
 	if err != nil {
+		err = fmt.Errorf("error getting equipment from DB: %v", err)
+		slog.Error(err.Error())
 		return err
 	}
-	parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent.Int64)
+	fmt.Print("Got equipment: ", equip)
+	parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent)
 	if err != nil {
+		err = fmt.Errorf("error getting parent equipment from DB: %v", err)
+		slog.Error(err.Error())
 		return err
 	}
 	if isHTMX {
@@ -125,16 +137,16 @@ func (e EquipmentHandler) HandleEditEquipment(c echo.Context) error {
 	fmt.Printf("Handling edit equipment request for %v\n", id)
 
 	// Create the equipment, parent and children variables
-	var equip db.Equipment
+	var equip db.GetEquipmentRow
 	var list []db.Equipment
-	var parent db.Equipment
+	var parent db.GetEquipmentRow
 
 	equip, err = e.Q.GetEquipment(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
 
-	parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent.Int64)
+	parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent)
 	if err != nil {
 		return err
 	}
