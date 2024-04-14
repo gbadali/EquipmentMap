@@ -18,7 +18,7 @@ RETURNING id
 
 type CreateEquipmentParams struct {
 	Name   string
-	Parent sql.NullInt64
+	Parent int64
 }
 
 func (q *Queries) CreateEquipment(ctx context.Context, arg CreateEquipmentParams) error {
@@ -27,19 +27,13 @@ func (q *Queries) CreateEquipment(ctx context.Context, arg CreateEquipmentParams
 }
 
 const getEquipment = `-- name: GetEquipment :one
-SELECT id, name, COALESCE(parent, '') as parent FROM equipment
+SELECT id, name, COALESCE(parent, 0) as parent FROM equipment
 WHERE id = ? LIMIT 1
 `
 
-type GetEquipmentRow struct {
-	ID     int64
-	Name   string
-	Parent int64
-}
-
-func (q *Queries) GetEquipment(ctx context.Context, id int64) (GetEquipmentRow, error) {
+func (q *Queries) GetEquipment(ctx context.Context, id int64) (Equipment, error) {
 	row := q.db.QueryRowContext(ctx, getEquipment, id)
-	var i GetEquipmentRow
+	var i Equipment
 	err := row.Scan(&i.ID, &i.Name, &i.Parent)
 	return i, err
 }
@@ -89,11 +83,11 @@ func (q *Queries) GetHierarchy(ctx context.Context, id int64) ([]GetHierarchyRow
 }
 
 const listChildren = `-- name: ListChildren :many
-SELECT id, name, parent FROM equipment
+SELECT id, name, COALESCE(parent, 0) FROM equipment
 WHERE parent = ?
 `
 
-func (q *Queries) ListChildren(ctx context.Context, parent sql.NullInt64) ([]Equipment, error) {
+func (q *Queries) ListChildren(ctx context.Context, parent int64) ([]Equipment, error) {
 	rows, err := q.db.QueryContext(ctx, listChildren, parent)
 	if err != nil {
 		return nil, err
@@ -117,7 +111,7 @@ func (q *Queries) ListChildren(ctx context.Context, parent sql.NullInt64) ([]Equ
 }
 
 const listEquipment = `-- name: ListEquipment :many
-SELECT id, name, parent FROM equipment
+SELECT id, name, COALESCE(parent, 0) FROM equipment
 ORDER BY id ASC
 `
 
@@ -188,7 +182,7 @@ WHERE id = ?
 
 type UpdateEquipmentParams struct {
 	Name   string
-	Parent sql.NullInt64
+	Parent int64
 	ID     int64
 }
 

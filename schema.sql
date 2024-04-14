@@ -1,7 +1,7 @@
 CREATE TABLE equipment (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
-    parent INTEGER,
+    parent INTEGER NOT NULL,
     FOREIGN KEY (parent) REFERENCES equipment(id)
 );
 

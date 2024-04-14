@@ -27,7 +27,6 @@ func NewEquipmentHandler(db *sql.DB, q *db.Queries) *EquipmentHandler {
 
 // HandleShowEquipment handles the request to show all equipment in a table
 func (e EquipmentHandler) HandleShowEquipment(c echo.Context) error {
-	fmt.Println("Handling show all equipment request")
 	equipmentList, err := e.Q.ListEquipmentAndParent((c.Request().Context()))
 	if err != nil {
 		return err
@@ -37,9 +36,7 @@ func (e EquipmentHandler) HandleShowEquipment(c echo.Context) error {
 
 // HandleSelectOptions handles the request to show all equipment in a select and generates the options
 func (e EquipmentHandler) HandleSelectOptions(c echo.Context) error {
-	fmt.Println("Handling list equipment request")
 	equipmentList, err := e.Q.ListEquipment(c.Request().Context())
-	fmt.Println(equipmentList)
 	if err != nil {
 		return err
 	}
@@ -52,7 +49,6 @@ func (e EquipmentHandler) HandleAddEquipment(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Handling add equipment request")
 	return render(c, equipment.EquipmentForm(list))
 }
 
@@ -64,13 +60,9 @@ func (e EquipmentHandler) HandleSaveEquipment(c echo.Context) error {
 		return err
 	}
 	equip := db.CreateEquipmentParams{
-		Name: name,
-		Parent: sql.NullInt64{
-			Valid: true,
-			Int64: parent,
-		},
+		Name:   name,
+		Parent: parent,
 	}
-	fmt.Printf("Handling save %v request", equip)
 
 	list, err := e.Q.ListEquipment(c.Request().Context())
 	if err != nil {
@@ -94,20 +86,17 @@ func (e EquipmentHandler) HandleShowIndividualEquipment(c echo.Context) error {
 		slog.Error(err.Error())
 		return err
 	}
-	fmt.Printf("Handling show individual equipment request for %v\n", id)
 
-	fmt.Printf("looking for breadcrumbs for %v\n", id)
 	breadcrumbs, err := e.breadcrumbs(c, id)
 	if err != nil {
 		err = fmt.Errorf("error getting breadcrumbs: %v", err)
 		slog.Error(err.Error())
 		return err
 	}
-	fmt.Print("breadcrumbs: ", breadcrumbs)
 
 	// Create the equipment, parent and children variables
-	var equip db.GetEquipmentRow
-	var parent db.GetEquipmentRow
+	var equip db.Equipment
+	var parent db.Equipment
 
 	equip, err = e.Q.GetEquipment(c.Request().Context(), id)
 	if err != nil {
@@ -115,12 +104,20 @@ func (e EquipmentHandler) HandleShowIndividualEquipment(c echo.Context) error {
 		slog.Error(err.Error())
 		return err
 	}
-	fmt.Print("Got equipment: ", equip)
-	parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent)
-	if err != nil {
-		err = fmt.Errorf("error getting parent equipment from DB: %v", err)
-		slog.Error(err.Error())
-		return err
+	if equip.Parent != 0 {
+		parent, err = e.Q.GetEquipment(c.Request().Context(), equip.Parent)
+		if err != nil {
+			err = fmt.Errorf("error getting parent equipment from DB: %v", err)
+			slog.Error(err.Error())
+			return err
+		}
+
+	} else {
+		parent = db.Equipment{
+			ID:     0,
+			Name:   "None",
+			Parent: 0,
+		}
 	}
 	if isHTMX {
 		return render(c, equipment.Equipment(equip, parent))
@@ -134,12 +131,11 @@ func (e EquipmentHandler) HandleEditEquipment(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Handling edit equipment request for %v\n", id)
 
 	// Create the equipment, parent and children variables
-	var equip db.GetEquipmentRow
+	var equip db.Equipment
 	var list []db.Equipment
-	var parent db.GetEquipmentRow
+	var parent db.Equipment
 
 	equip, err = e.Q.GetEquipment(c.Request().Context(), id)
 	if err != nil {
@@ -155,15 +151,14 @@ func (e EquipmentHandler) HandleEditEquipment(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	for i, item := range list {
-		if item.ID == equip.ID {
-			// Remove the matching item from the list
-			list = append(list[:i], list[i+1:]...)
-			break
-		}
-	}
 
-	return render(c, equipment.EditEquipment(equip, parent, list))
+	// Reomve the equipment that is a parent of the current equipment from the list
+	// this prevents cyclical references
+	// This is wrong because it removes the parents from the list but instead it
+	// should remove the children from the list
+	newlist := preventCycles(list, id)
+
+	return render(c, equipment.EditEquipment(equip, parent, newlist))
 
 }
 
@@ -198,7 +193,7 @@ func (e EquipmentHandler) HandleUpdateEquipment(c echo.Context) error {
 	err = e.Q.UpdateEquipment(c.Request().Context(), db.UpdateEquipmentParams{
 		ID:     id,
 		Name:   name,
-		Parent: sql.NullInt64{Int64: parent, Valid: true},
+		Parent: parent,
 	})
 	if err != nil {
 		return err

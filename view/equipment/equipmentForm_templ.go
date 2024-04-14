@@ -137,7 +137,7 @@ func EquipmentSelectOptions(equip []db.Equipment, selected string) templ.Compone
 }
 
 // EquipmentLayout renders a single piece of equipment
-func EquipmentLayout(equip db.GetEquipmentRow, parent db.GetEquipmentRow, bread []db.GetEquipmentRow) templ.Component {
+func EquipmentLayout(equip db.Equipment, parent db.Equipment, bread []db.Equipment) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -189,7 +189,7 @@ func EquipmentLayout(equip db.GetEquipmentRow, parent db.GetEquipmentRow, bread 
 }
 
 // Equipment renders a single piece of equipment
-func Equipment(equip db.GetEquipmentRow, parent db.GetEquipmentRow) templ.Component {
+func Equipment(equip db.Equipment, parent db.Equipment) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -248,7 +248,7 @@ func Equipment(equip db.GetEquipmentRow, parent db.GetEquipmentRow) templ.Compon
 }
 
 // EditEquipment renders a form to edit equipment
-func EditEquipment(equip db.GetEquipmentRow, parent db.GetEquipmentRow, list []db.Equipment) templ.Component {
+func EditEquipment(equip db.Equipment, parent db.Equipment, list []db.Equipment) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -305,7 +305,7 @@ func EditEquipment(equip db.GetEquipmentRow, parent db.GetEquipmentRow, list []d
 }
 
 // Breadcrumbs renders a breadcrumb trail
-func Breadcrumbs(bread []db.GetEquipmentRow) templ.Component {
+func Breadcrumbs(bread []db.Equipment) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {

@@ -4,12 +4,10 @@
 
 package db
 
-import (
-	"database/sql"
-)
+import ()
 
 type Equipment struct {
 	ID     int64
 	Name   string
-	Parent sql.NullInt64
+	Parent int64
 }

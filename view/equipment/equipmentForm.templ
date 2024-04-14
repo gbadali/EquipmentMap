@@ -46,7 +46,7 @@ templ EquipmentSelectOptions(equip []db.Equipment, selected string) {
 }
 
 // EquipmentLayout renders a single piece of equipment
-templ EquipmentLayout(equip db.GetEquipmentRow, parent db.GetEquipmentRow, bread []db.GetEquipmentRow) {
+templ EquipmentLayout(equip db.Equipment, parent db.Equipment, bread []db.Equipment) {
 	@layout.Base("Equipment") {
 		<div class="container">
 			@Breadcrumbs(bread)
@@ -56,7 +56,7 @@ templ EquipmentLayout(equip db.GetEquipmentRow, parent db.GetEquipmentRow, bread
 }
 
 // Equipment renders a single piece of equipment
-templ Equipment(equip db.GetEquipmentRow, parent db.GetEquipmentRow) {
+templ Equipment(equip db.Equipment, parent db.Equipment) {
 	<article hx-target="this" hx-swap="outerHTML">
 		<header>Equipment</header>
 		<div><label>Name:</label> <input type="text" placeholder={ equip.Name } readonly/></div>
@@ -71,7 +71,7 @@ templ Equipment(equip db.GetEquipmentRow, parent db.GetEquipmentRow) {
 }
 
 // EditEquipment renders a form to edit equipment
-templ EditEquipment(equip db.GetEquipmentRow, parent db.GetEquipmentRow, list []db.Equipment) {
+templ EditEquipment(equip db.Equipment, parent db.Equipment, list []db.Equipment) {
 	<article hx-target="this" hx-swap="outerHTML">
 		<header>Edit Equipment</header>
 		<form hx-put={ fmt.Sprint(equip.ID) }>
@@ -99,7 +99,7 @@ templ EditEquipment(equip db.GetEquipmentRow, parent db.GetEquipmentRow, list []
 }
 
 // Breadcrumbs renders a breadcrumb trail
-templ Breadcrumbs(bread []db.GetEquipmentRow) {
+templ Breadcrumbs(bread []db.Equipment) {
 	<nav aria-label="breadcrumb">
 		<ul>
 			for _,b := range bread {
