@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/a-h/templ"
@@ -16,16 +18,15 @@ func render(c echo.Context, component templ.Component) error {
 func (e EquipmentHandler) breadcrumbs(c echo.Context, id int64) ([]db.Equipment, error) {
 	var bread []db.Equipment
 	originalID := id
-	for {
-		equip, err := e.Q.GetEquipment(c.Request().Context(), id)
-		if err != nil {
-			err = fmt.Errorf("error getting equipment from DB for breadcrumbs: %v", err)
-			return nil, err
-		}
-		if equip.Parent == 0 {
-			bread = append([]db.Equipment{equip}, bread...)
-			break
-		}
+	equip, err := e.Q.GetEquipment(c.Request().Context(), id)
+	fmt.Println(equip, equip.Parent)
+	fmt.Println(errors.Is(err, sql.ErrNoRows))
+	if err != nil {
+		err = fmt.Errorf("error getting equipment from DB for breadcrumbs: %v", err)
+		return nil, err
+	}
+
+	for equip.Parent > 0 {
 		id = equip.Parent
 		bread = append([]db.Equipment{equip}, bread...)
 		if id == originalID {

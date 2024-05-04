@@ -1,5 +1,5 @@
 -- name: GetEquipment :one
-SELECT id, name, COALESCE(parent, 0) as parent FROM equipment
+SELECT * FROM equipment
 WHERE id = ? LIMIT 1;
 
 -- name: ListEquipmentAndParent :many
@@ -9,7 +9,7 @@ LEFT JOIN equipment p ON e.parent = p.id
 ORDER BY e.id ASC;
 
 -- name: ListEquipment :many
-SELECT id, name, COALESCE(parent, 0) FROM equipment
+SELECT * FROM equipment
 ORDER BY id ASC;
 
 -- name: CreateEquipment :exec
@@ -18,7 +18,7 @@ VALUES (?, ?)
 RETURNING id;
 
 -- name: ListChildren :many
-SELECT id, name, COALESCE(parent, 0) FROM equipment
+SELECT * FROM equipment
 WHERE parent = ?;
 
 -- name: UpdateEquipment :exec
@@ -36,6 +36,6 @@ WITH RECURSIVE parents AS (
   FROM equipment p
   INNER JOIN parents c ON p.id = c.parent
 )
-SELECT id, name, COALESCE(parent, 0) FROM parents
+SELECT id, name, * FROM parents
 WHERE parent IS NULL OR parent IS NOT NULL
 ORDER BY parent;

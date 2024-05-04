@@ -27,7 +27,7 @@ func (q *Queries) CreateEquipment(ctx context.Context, arg CreateEquipmentParams
 }
 
 const getEquipment = `-- name: GetEquipment :one
-SELECT id, name, COALESCE(parent, 0) as parent FROM equipment
+SELECT id, name, parent FROM equipment
 WHERE id = ? LIMIT 1
 `
 
@@ -48,7 +48,7 @@ WITH RECURSIVE parents AS (
   FROM equipment p
   INNER JOIN parents c ON p.id = c.parent
 )
-SELECT id, name, COALESCE(parent, 0) FROM parents
+SELECT id, name, id, name, parent FROM parents
 WHERE parent IS NULL OR parent IS NOT NULL
 ORDER BY parent
 `
@@ -56,6 +56,8 @@ ORDER BY parent
 type GetHierarchyRow struct {
 	ID     int64
 	Name   string
+	ID_2   int64
+	Name_2 string
 	Parent int64
 }
 
@@ -68,7 +70,13 @@ func (q *Queries) GetHierarchy(ctx context.Context, id int64) ([]GetHierarchyRow
 	var items []GetHierarchyRow
 	for rows.Next() {
 		var i GetHierarchyRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.Parent); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.ID_2,
+			&i.Name_2,
+			&i.Parent,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -83,7 +91,7 @@ func (q *Queries) GetHierarchy(ctx context.Context, id int64) ([]GetHierarchyRow
 }
 
 const listChildren = `-- name: ListChildren :many
-SELECT id, name, COALESCE(parent, 0) FROM equipment
+SELECT id, name, parent FROM equipment
 WHERE parent = ?
 `
 
@@ -111,7 +119,7 @@ func (q *Queries) ListChildren(ctx context.Context, parent int64) ([]Equipment, 
 }
 
 const listEquipment = `-- name: ListEquipment :many
-SELECT id, name, COALESCE(parent, 0) FROM equipment
+SELECT id, name, parent FROM equipment
 ORDER BY id ASC
 `
 

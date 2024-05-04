@@ -1,3 +1,3 @@
 run:
 	@templ generate
-	@go run cmd/main.go
+	@go run cmd/*.go
