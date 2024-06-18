@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -27,9 +28,11 @@ func NewEquipmentHandler(db *sql.DB, q *db.Queries) *EquipmentHandler {
 
 // HandleShowEquipment handles the request to show all equipment in a table
 func (e EquipmentHandler) HandleShowEquipment(c echo.Context) error {
+	log.Println("Handling request to show all equipment")
 	equipmentList, err := e.Q.ListEquipmentAndParent((c.Request().Context()))
+	log.Println(err)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting equipment list: %w", err)
 	}
 	return render(c, equipment.EquipmentList(equipmentList))
 }
